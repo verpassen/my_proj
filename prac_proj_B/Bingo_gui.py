@@ -1,4 +1,4 @@
-#!/bin/usr
+#!/usr/bin/env python 
 #-*- coding:utf-8 -*- 
 from tkinter import * 
 from tkinter.messagebox import *
@@ -20,12 +20,12 @@ class gui:
 		[self.w.create_line(k,0,k,300,fill="#470642",width=3) for k in range(0,350,50)]
 		
 		# create button and entry widget
-		B1 = Button(width=15,height=3,text='Clear',command=self.txt_clear).pack(side='right')
-		B2 = Button(width=15,height=3,text='Check',command=self.check_connect).pack(side='right')
-		B3 = Button(width=15,height=3,text='New',command=self.create_rand_sqr).pack(side='right')
-		
-		self.E1 = Entry(width = 15,textvariable=self.sampling_qty).pack()
-		self.w.pack()
+		B1 = Button(width=15,height=3,text='Clear',command=self.txt_clear).grid(row=3,column=5)
+		B2 = Button(width=15,height=3,text='Check',command=self.check_connect).grid(row=3,column=4)
+		B3 = Button(width=15,height=3,text='New',command=self.create_rand_sqr).grid(row=3,column=3)
+		L1 = Label(width=35, height=10,text='Sampling Number Quantity').grid(row=2,column=1)
+		self.E1 = Entry(width = 15,textvariable=self.sampling_qty).grid(row=2,column=3)
+		self.w.grid( )
 
 	def create_rand_sqr(self):
 		# create random square

@@ -23,8 +23,8 @@ class gui:
 		B1 = Button(width=15,height=3,text='Clear',command=self.txt_clear).pack(side='right')
 		B2 = Button(width=15,height=3,text='Check',command=self.check_connect).pack(side='right')
 		B3 = Button(width=15,height=3,text='New',command=self.create_rand_sqr).pack(side='right')
-		
-		self.E1 = Entry(width = 15,textvariable=self.sampling_qty).pack()
+        W1 = Text(width=15, height=10,text='Sampling Number Quantity').pack(side='right')	
+        self.E1 = Entry(width = 15,textvariable=self.sampling_qty).pack()
 		self.w.pack()
 
 	def create_rand_sqr(self):
