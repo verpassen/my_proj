@@ -10,7 +10,9 @@ class FileOrganizerApp(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('file_organize.ui', self)
- 
+
+        self.current_directory = './'
+        self.current_json = 'file_metadata.json'
         self.setupModel()
         self.connect_signals()
 
@@ -71,10 +73,27 @@ class FileOrganizerApp(QMainWindow):
 
     def load_file(self):
         filename, _  =  QFileDialog.getOpenFileName(self, 'Open File', os.getenv('./'))
-        self.load_metadata(filename)
-        self.populate_tree()
-        self.populate_table()
-        
+        if filename:
+            
+            self.load_metadata(filename)
+            new_root_dir = os.path.dirname(filename)
+            self.current_directory = new_root_dir
+            self.current_json =  filename
+            self.update_tree_view(new_root_dir)
+            self.populate_table()
+
+    def count_files(self, directory):
+        """Count the total number of files in the directory"""
+        count = 0
+        for root, dirs, files in os.walk(directory):
+            count += len(files)
+        return count
+    
+    def update_tree_view(self, path):
+        """Update the tree view to show the contents of the specified path"""
+        self.tree_view.setRootIndex(self.tree_model.index(path))
+        self.Total_file_Lbl.setText(str(self.count_files(path)))
+
     def populate_table(self):
         self.table_model.clear()
         for file_path, metadata in self.file_metadata.items():
@@ -83,6 +102,7 @@ class FileOrganizerApp(QMainWindow):
             notes = QStandardItem(metadata["notes"])
             self.table_model.appendRow([file_name, tags, notes])    
 
+        self.table_model.setHorizontalHeaderLabels(["File Name", "Tags", "Notes"])
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
     def clean_metadata(self):
@@ -113,21 +133,32 @@ class FileOrganizerApp(QMainWindow):
     def save_metadata(self):
         selected = self.tree_view.selectedIndexes()
         if selected:
-            file_path = self.get_file_path(selected[0])
-            tags = [tag.strip() for tag in self.tag_input.text().split(',')]
+            file_path = self.tree_model.filePath(selected[0])
+            rel_path = os.path.relpath(file_path, self.current_directory)
+            
+            tags = [tag.strip() for tag in self.tag_input.text().split(',') if tag.strip()]
             notes = self.note_input.toPlainText()
 
-        if file_path not in self.file_metadata:
-            self.file_metadata[file_path] = {'name':  file_path, 'tags':[],'notes':''}
+            if rel_path not in self.file_metadata:
+                self.file_metadata[rel_path] = {
+                    'name': os.path.basename(file_path),
+                    'tags': [],
+                    'notes': ''
+                }
 
-        self.file_metadata[file_path]['tags'] = list(set(self.file_metadata[file_path]['tags'] + tags))
+            self.file_metadata[rel_path]['tags'] = list(set(self.file_metadata[rel_path]['tags'] + tags))
+            
+            if notes:
+                self.file_metadata[rel_path]['notes'] = notes
 
-        if notes:
-            self.file_metadata[file_path]['notes'] = notes
- 
-        self.save_to_json()
-        self.populate_table()
-        self.tag_input.clear()
+            self.save_to_json()
+            self.populate_table()
+            self.tag_input.clear()
+            self.note_input.clear()
+            
+            QMessageBox.information(self, "Success", "Metadata saved successfully!")
+        else:
+            QMessageBox.warning(self, "Error", "Please select a file first")
 
     def get_file_path(self, index):
         path = []
@@ -136,20 +167,44 @@ class FileOrganizerApp(QMainWindow):
             index = index.parent()
         return os.path.join(*path)
 
-    def load_metadata(self,filepath=None):
+    def load_metadata(self, filepath=None):
         try:
-            if not filepath : 
-                with open('file_metadata.json', 'r') as f:
-                    self.file_metadata = json.load(f)
+            if not filepath:
+                default_path = os.path.join(self.current_directory, self.current_json)
+                if os.path.exists(default_path):
+                    with open(default_path, 'r') as f:
+                        self.file_metadata = json.load(f)
             else:
-                with open(filepath,'r') as f: 
+                with open(filepath, 'r') as f:
                     self.file_metadata = json.load(f)
-                    
+                
+                # Update paths in metadata to be relative to the new root directory
+                new_metadata = {}
+                base_dir = os.path.dirname(filepath)
+                
+                for file_path, metadata in self.file_metadata.items():
+                    # Convert absolute paths to relative paths if necessary
+                    if os.path.isabs(file_path):
+                        try:
+                            rel_path = os.path.relpath(file_path, base_dir)
+                            new_metadata[rel_path] = metadata
+                            metadata['name'] = os.path.basename(file_path)
+                        except ValueError:
+                            # If paths are on different drives or cannot be made relative
+                            new_metadata[file_path] = metadata
+                    else:
+                        new_metadata[file_path] = metadata
+                
+                self.file_metadata = new_metadata
+                
         except FileNotFoundError:
+            self.file_metadata = {}
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "Error", "Invalid JSON file format")
             self.file_metadata = {}
 
     def save_to_json(self):
-        with open('file_metadata.json', 'w') as f:
+        with open(self.current_json, 'w') as f:
             json.dump(self.file_metadata, f, indent=2)
 
     def filter_table(self, text):
