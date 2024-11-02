@@ -10,12 +10,14 @@ class FileOrganizerApp(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('file_organize.ui', self)
-
+        
+        # init parameters 
         self.current_directory = './'
         self.current_json = 'file_metadata.json'
         self.setupModel()
         self.connect_signals()
-
+        self.tags_pool = []
+        
         # Set up the filter proxy model
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.table_model)
@@ -25,7 +27,7 @@ class FileOrganizerApp(QMainWindow):
         self.search_bar.textChanged.connect(self.filter_table)
         self.save_btn.clicked.connect(self.save_metadata)
         self.delete_btn.clicked.connect(self.remove_metadata)
-        self.clear_btn.clicked.connect(self.clean_metadata)
+        self.saveas_btn.clicked.connect(self.saveas_file)
         self.load_btn.clicked.connect(self.load_file)
 
         self.file_metadata = {}
@@ -57,7 +59,7 @@ class FileOrganizerApp(QMainWindow):
             self.populate_table()
 
     def populate_tree(self):
-        root_dir = "/home/chang/Documents/papers/"  # Replace with your desired directory
+        root_dir = "./"  # Replace with your desired directory
         root_item = self.tree_model.rootPath()
         self.add_directory(root_dir, root_item)
         
@@ -105,9 +107,12 @@ class FileOrganizerApp(QMainWindow):
         self.table_model.setHorizontalHeaderLabels(["File Name", "Tags", "Notes"])
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-    def clean_metadata(self):
-        pass
-
+    def saveas_file(self):
+        filename, _ = QFileDialog.getSaveFileName(self,'Save as',os.getenv(self.current_directory),'json file(*.json)')
+        if filename:
+            with open(filename,'w') as f :
+                f.write(json.dumps(self.file_metadata))
+                
     def remove_metadata(self):
         selected = self.table_view.selectedIndexes()
         if selected:
@@ -138,6 +143,10 @@ class FileOrganizerApp(QMainWindow):
             
             tags = [tag.strip() for tag in self.tag_input.text().split(',') if tag.strip()]
             notes = self.note_input.toPlainText()
+            
+            # add new tags in tags pool 
+            if tags not in self.tags_pool:
+                self.tags_pool.append(tags)
 
             if rel_path not in self.file_metadata:
                 self.file_metadata[rel_path] = {
