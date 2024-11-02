@@ -1,7 +1,8 @@
-# save some learning project result here 
+## Chang Project
+save some learning project results here 
 
-# Current finish 
 
+### Current  
 1. algorithm prac
   The questions listed in a book. try to solve it in python language
 
@@ -11,4 +12,10 @@
  However, sometimes I found the topics sometimes are coupled. 
  It is hard to decide put this paper in folder A or folder B. 
  
+ ### old 
+ - Bingo game
+
+ - Maze
  
+
+
