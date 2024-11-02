@@ -47,7 +47,7 @@ class FileOrganizerApp(QMainWindow):
         self.table_model = QStandardItemModel()
         self.table_model.setHorizontalHeaderLabels(["File Name", "Tags", "Notes"])
         self.table_view.setModel(self.table_model)
-        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
  
     def connect_signals(self):
         self.tree_view.clicked.connect(self.on_tree_view_clicked)
@@ -105,7 +105,7 @@ class FileOrganizerApp(QMainWindow):
             self.table_model.appendRow([file_name, tags, notes])    
 
         self.table_model.setHorizontalHeaderLabels(["File Name", "Tags", "Notes"])
-        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
     def saveas_file(self):
         filename, _ = QFileDialog.getSaveFileName(self,'Save as',os.getenv(self.current_directory),'json file(*.json)')
